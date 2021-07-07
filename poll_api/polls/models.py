@@ -2,12 +2,14 @@ from django.db import models
 from django.contrib.auth import get_user_model
 
 
-# Create your models here.
+# models for polls_api
+
 class Poll(models.Model):
-    title = models.CharField('poll title', max_length=1024)
-    start_date = models.DateTimeField()
+    poll_id = models.IntegerField(default=0, unique=True)
+    title = models.CharField(max_length=1024)
+    start_date = models.DateTimeField(auto_now_add=True)
     expiration_date = models.DateTimeField()
-    description = models.CharField(max_length=4096)
+    description = models.CharField(max_length=4096, blank=True)
 
     def __str__(self):
         return self.title
@@ -42,7 +44,11 @@ class Choice(models.Model):
 class Answer(models.Model):
     user = models.ForeignKey(get_user_model(), on_delete=models.DO_NOTHING)
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
-    text_input = models.CharField('text answer', max_length=8096)
-    single_choice = models.ForeignKey(Choice, on_delete=models.CASCADE)
-    multi_choice = models.ManyToManyField(Choice, on_delete=models.CASCADE)
+    text_input = models.CharField('text answer', max_length=8096, null=True)
+    single_choice = models.ForeignKey(Choice,
+                                      on_delete=models.CASCADE,
+                                      null=True,
+                                      related_name='single_choice')
+    multi_choice = models.ManyToManyField(Choice,
+                                          related_name='one_of_the_choices')
     date = models.DateTimeField(auto_now_add=True)
