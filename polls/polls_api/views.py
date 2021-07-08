@@ -54,3 +54,9 @@ class PollsView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+class QuestionsView(APIView):
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, poll_id_requested):
+        return Response(status=status.HTTP_404_NOT_FOUND)
