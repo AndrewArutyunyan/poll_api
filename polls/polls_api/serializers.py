@@ -1,6 +1,7 @@
 from abc import ABC
 
 from rest_framework import serializers
+from django.contrib.auth.models import  User
 from .models import Poll, Question, Answer, Choice
 
 
@@ -10,10 +11,13 @@ from .models import Poll, Question, Answer, Choice
 #     start_date = serializers.DateTimeField()
 #     expiration_date = serializers.DateTimeField()
 #     description = serializers.CharField(max_length=4096, allow_blank=True)
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'first_name', 'last_name']
+
 
 class PollSerializer(serializers.ModelSerializer):
-    #questions = serializers.PrimaryKeyRelatedField(allow_null=True, many=True, queryset=Question.objects.all())
-
     class Meta:
         model = Poll
         fields = '__all__'
