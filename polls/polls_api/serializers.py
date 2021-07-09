@@ -1,7 +1,7 @@
 from abc import ABC
 
 from rest_framework import serializers
-from django.contrib.auth.models import  User
+from django.contrib.auth.models import User
 from .models import Poll, Question, Answer, Choice
 
 
@@ -21,13 +21,40 @@ class PollSerializer(serializers.ModelSerializer):
     class Meta:
         model = Poll
         fields = '__all__'
-        # read_only_fields = ('start_date')
 
     def create(self, validated_data):
         return Poll.objects.create(**validated_data)
+
+
+class ChoiceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Choice
+        fields = ['title']
 
 
 class QuestionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
         fields = '__all__'
+
+
+class QuestionWithTextInputType(serializers.ModelSerializer):
+    class Meta:
+        model = Question
+        fields = '__all__'
+
+
+class QuestionWithSingleChoiceType(serializers.ModelSerializer):
+    choice = ChoiceSerializer(read_only=True)
+
+    class Meta:
+        model = Question
+        fields = ['id', 'text', 'type']
+
+
+class QuestionWithMultipleChoicesType(serializers.ModelSerializer):
+    choice = ChoiceSerializer(read_only=True, many=True)
+
+    class Meta:
+        model = Question
+        fields = ['id', 'text', 'type']
