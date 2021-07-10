@@ -1,5 +1,5 @@
 import datetime
-
+from django.contrib.auth.models import User
 from django.utils.timezone import get_default_timezone
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -240,6 +240,33 @@ class AnswerView(generics.ListCreateAPIView):
         return queryset
 
 
+class UserListView(APIView):
+    """
+
+    """
+
+    def get(self, request):
+        """
+        Return only answers related to the question
+        :return: queryset of answers on the question
+        """
+        print(list(Answer.objects.all()))
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
+
+class UserView(APIView):
+    """
+
+    """
+
+    def get(self, request, user_id):
+        """
+        Return only answers related to the question
+        :return: queryset of answers on the question
+        """
+        queryset = Answer.objects.filter(user_id=user_id)
+        serializer = serializers.AnswerSerializer(queryset, many=True)
+        return Response(serializer.data)
 
     # Show list of answers, permission: admin only
     # def get(self, request):
@@ -274,4 +301,3 @@ class AnswerView(generics.ListCreateAPIView):
     #     print("___DELETE_____DELETE__")
     #     Poll.objects.all().delete()
     #     return Response(status=status.HTTP_204_NO_CONTENT)
-

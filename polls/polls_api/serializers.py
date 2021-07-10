@@ -79,7 +79,7 @@ class AnswerSerializer(serializers.ModelSerializer):
 
 class UserSerializer(serializers.ModelSerializer):
     polls = serializers.PrimaryKeyRelatedField(many=True,
-                                               queryset=User.objects.all())
+                                               queryset=Poll.objects.all())
     answers = AnswerSerializer(many=True, read_only=True)
 
     class Meta:
