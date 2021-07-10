@@ -1,5 +1,6 @@
 import datetime
 
+import pytz
 from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -52,8 +53,10 @@ class QuestionsView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def get(self, request, poll_id_requested):
-        poll = Poll.objects.filter(id=poll_id_requested)
-        if not request.user.is_superuser && s = Poll.objects.filter(start_date__lte=now, expiration_date__gt=now)
+        now = datetime.datetime.now(tz=None).replace(tzinfo=pytz.timezone('Europe/Moscow'))
+        poll = Poll.objects.filter(id=poll_id_requested).first()
+        if not request.user.is_superuser and poll.expiration_date < now:
+            return Response(status=status.HTTP_404_NOT_FOUND)
         questions = Question.objects.filter(poll=poll_id_requested)
         questions_serializer = QuestionSerializer(questions, many=True)
         return Response(questions_serializer.data, status=status.HTTP_200_OK)
