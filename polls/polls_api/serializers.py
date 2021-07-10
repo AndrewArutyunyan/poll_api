@@ -11,25 +11,12 @@ from .models import Poll, Question, Answer, Choice
 #     start_date = serializers.DateTimeField()
 #     expiration_date = serializers.DateTimeField()
 #     description = serializers.CharField(max_length=4096, allow_blank=True)
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['id', 'first_name', 'last_name']
-
-
-class PollSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Poll
-        fields = '__all__'
-
-    def create(self, validated_data):
-        return Poll.objects.create(**validated_data)
 
 
 class ChoiceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Choice
-        fields = ['title']
+        fields = ['question', 'title']
 
 
 class QuestionSerializer(serializers.ModelSerializer):
@@ -53,8 +40,48 @@ class QuestionWithSingleChoiceType(serializers.ModelSerializer):
 
 
 class QuestionWithMultipleChoicesType(serializers.ModelSerializer):
-    choice = ChoiceSerializer(read_only=True, many=True)
+    choice = ChoiceSerializer(read_only=True, many=True, allow_null=True)
 
     class Meta:
         model = Question
-        fields = ['id', 'text', 'type']
+        fields = ['id', 'text', 'type', 'choice']
+
+
+class QuestionDetailSerializer(serializers.ModelSerializer):
+    choices = ChoiceSerializer(read_only=True, many=True)
+
+    class Meta:
+        model = Question
+        fields = ['text', 'type', 'choices']
+
+
+class PollSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Poll
+        fields = '__all__'
+
+
+class PollDetailSerializer(serializers.ModelSerializer):
+    questions = QuestionSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Poll
+        fields = ['title', 'start_date', 'expiration_date', 'description', 'questions']
+
+
+class AnswerSerializer(serializers.ModelSerializer):
+    # choices = ChoiceSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Answer
+        fields = ['question', 'text_input', 'choices', 'user_id', 'date']
+
+
+class UserSerializer(serializers.ModelSerializer):
+    polls = serializers.PrimaryKeyRelatedField(many=True,
+                                               queryset=User.objects.all())
+    answers = AnswerSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = User
+        fields = ['id', 'first_name', 'last_name', 'polls', 'answers']

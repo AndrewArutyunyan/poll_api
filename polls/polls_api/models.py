@@ -24,7 +24,7 @@ class Question(models.Model):
     text = models.TextField('question text', max_length=8192)
     type = models.CharField(max_length=6, choices=ANSWER_TYPES)
     poll = models.ForeignKey(Poll,
-                             verbose_name='related_poll',
+                             related_name='questions',
                              on_delete=models.CASCADE)
 
     def __str__(self):
@@ -32,7 +32,9 @@ class Question(models.Model):
 
 
 class Choice(models.Model):
-    question = models.ForeignKey(Question, on_delete=models.CASCADE)
+    question = models.ForeignKey(Question,
+                                 related_name='choices',
+                                 on_delete=models.CASCADE)
     title = models.CharField(max_length=4096)
     lock_other = models.BooleanField(default=False)
 
@@ -41,13 +43,13 @@ class Choice(models.Model):
 
 
 class Answer(models.Model):
-    user = models.ForeignKey(get_user_model(), on_delete=models.DO_NOTHING)
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
-    text_input = models.CharField('text answer', max_length=8096, null=True)
-    single_choice = models.ForeignKey(Choice,
-                                      on_delete=models.CASCADE,
-                                      null=True,
-                                      related_name='single_choice')
-    multi_choice = models.ManyToManyField(Choice,
-                                          related_name='one_of_the_choices')
+    text_input = models.CharField('text answer',
+                                  max_length=8096,
+                                  null=True)
+    choices = models.ManyToManyField(Choice, related_name='answers')
     date = models.DateTimeField(auto_now_add=True)
+    user_id = models.IntegerField(default=7)
+
+    class Meta:
+        ordering = ['date']
