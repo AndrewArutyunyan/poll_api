@@ -8,7 +8,8 @@ Django based REST API for polls.
 2. Clone repository
 3. Install all requirements from requirements.txt
 4. Do migrations:
-
-    <python manage.py makemigrations>
+'''bash
+python manage.py makemigrations
+'''
 
 
