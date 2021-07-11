@@ -9,6 +9,7 @@ router = DefaultRouter()
 router.register(r'poll', views.PollViewSet)
 router.register(r'poll/(?P<poll_id>[0-9]+)/question', views.QuestionViewSet)
 router.register(r'poll/(?P<poll_id>[0-9]+)/question/(?P<question_id>[0-9]+)/choice', views.ChoicesViewSet)
+router.register(r'poll/(?P<poll_id>[0-9]+)/question/(?P<question_id>[0-9]+)/answer', views.AnswerViewSet)
 
 schema_view = get_schema_view(title='Polls API',
                               description='An API to publish polls and collect answers')
@@ -16,7 +17,7 @@ app_name = "polls"
 
 urlpatterns = [
     path('api/', include(router.urls)),
-    re_path(r'api/poll/(?P<poll_id>[0-9]+)/question/(?P<question_id>[0-9]+)/answer', views.AnswerView.as_view()),
+    # re_path(r'api/poll/(?P<poll_id>[0-9]+)/question/(?P<question_id>[0-9]+)/answer', views.AnswerView.as_view()),
     re_path(r'api/user/(?P<user_id>[0-9]+)', views.UserView.as_view()),
     re_path(r'api/user', views.UserListView.as_view()),
 

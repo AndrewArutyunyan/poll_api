@@ -4,7 +4,7 @@ from django.utils.timezone import get_default_timezone
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import authentication, permissions, status, viewsets, generics
-from .models import Poll, Question, Choice, Answer
+from .models import Poll, Question, Choice, Answer, Participant
 from . import serializers
 
 
@@ -27,7 +27,7 @@ class IsAdminOrReadOnly(permissions.BasePermission):
         return request.user.is_superuser
 
 
-class IsAdminOrWriteOnly(permissions.BasePermission):
+class IsAdminOrPostOnly(permissions.BasePermission):
     """
     Object-level permission to only allow admin to edit it
     """
@@ -41,9 +41,9 @@ class IsAdminOrWriteOnly(permissions.BasePermission):
         :return: binary decision
         """
         print(request.method)
-        if request.method == 'GET':
-            return request.user.is_superuser
-        return True
+        if request.method == 'POST':
+            return True
+        return request.user.is_superuser
 
 
 # User working with polls.
@@ -211,7 +211,7 @@ class ChoicesViewSet(viewsets.ModelViewSet):
         return queryset
 
 
-class AnswerView(generics.ListCreateAPIView):
+class AnswerViewSet(viewsets.ModelViewSet):
     """
     list:
     Return a list of all answers of users
@@ -221,7 +221,7 @@ class AnswerView(generics.ListCreateAPIView):
     """
     queryset = Answer.objects.all()
     serializer_class = serializers.AnswerSerializer
-    permission_classes = [IsAdminOrWriteOnly]
+    permission_classes = [IsAdminOrPostOnly]
 
     def perform_create(self, serializer):
         """
@@ -229,6 +229,7 @@ class AnswerView(generics.ListCreateAPIView):
         :param serializer: AnswerSerializer
         :return: AnswerSerializer
         """
+        serializer.is_valid()
         serializer.save()
 
     def get_queryset(self):
@@ -237,6 +238,23 @@ class AnswerView(generics.ListCreateAPIView):
         :return: queryset of answers on the question
         """
         queryset = Answer.objects.filter(question=self.kwargs['question_id'])
+        return queryset
+
+
+class ParticipantViewSet(generics.RetrieveUpdateAPIView):
+    """
+
+    """
+    queryset = Participant.objects.all()
+    serializer_class = serializers.ParticipantSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def get_queryset(self):
+        """
+        Return only answers related to the question
+        :return: queryset of answers on the question
+        """
+        queryset = Participant.objects.filter(user_id=self.kwargs['user_id'])
         return queryset
 
 
@@ -250,8 +268,9 @@ class UserListView(APIView):
         Return only answers related to the question
         :return: queryset of answers on the question
         """
-        print(list(Answer.objects.all()))
-        return Response(status=status.HTTP_403_FORBIDDEN)
+        queryset = Participant.objects.all()
+        serializer = serializers.ParticipantSerializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class UserView(APIView):
@@ -259,14 +278,39 @@ class UserView(APIView):
 
     """
 
+    # def get(self, request, user_id):
+    #     """
+    #     Return only answers related to the question
+    #     :return: queryset of answers on the question
+    #     """
+    #     queryset = Answer.objects.filter(user_id=user_id)
+    #     serializer = serializers.AnswerSerializer(queryset, many=True)
+    #     return Response(serializer.data)
+
     def get(self, request, user_id):
         """
         Return only answers related to the question
-        :return: queryset of answers on the question
         """
-        queryset = Answer.objects.filter(user_id=user_id)
-        serializer = serializers.AnswerSerializer(queryset, many=True)
+        queryset = Participant.objects.filter(user_id=user_id)
+        if queryset.count() < 1:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        serializer = serializers.ParticipantSerializer(queryset.last())
         return Response(serializer.data)
+
+    def patch(self, request, user_id):
+        """
+        Change name or email
+        """
+        if request.data.get('answers') or request.data.get('user_id'):
+            return Response(status=status.HTTP_403_FORBIDDEN)
+        queryset = Participant.objects.filter(user_id=user_id)
+        if queryset.count() < 1:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        serializer = serializers.ParticipantSerializer(queryset.last(), data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(data=serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     # Show list of answers, permission: admin only
     # def get(self, request):

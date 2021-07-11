@@ -43,13 +43,28 @@ class Choice(models.Model):
 
 
 class Answer(models.Model):
-    question = models.ForeignKey(Question, on_delete=models.CASCADE)
+    question = models.ForeignKey(Question,
+                                 related_name='answers',
+                                 on_delete=models.CASCADE)
     text_input = models.CharField('text answer',
                                   max_length=8096,
                                   null=True)
-    choices = models.ManyToManyField(Choice, related_name='answers')
+    choices = models.ManyToManyField(Choice,
+                                     blank=True,
+                                     related_name='answers')
     date = models.DateTimeField(auto_now_add=True)
-    user_id = models.IntegerField(default=7)
+    # user_id = models.IntegerField(default=7)
+    user_id = models.ForeignKey('Participant',
+                                related_name='answers',
+                                on_delete=models.CASCADE)
+    user_id_requested = models.IntegerField(default=0)
 
     class Meta:
         ordering = ['date']
+
+
+class Participant(models.Model):
+    user_id = models.IntegerField(primary_key=True, unique=True)
+    first_name = models.CharField(max_length=64, null=True)
+    last_name = models.CharField(max_length=64, null=True)
+    email = models.CharField(max_length=64, null=True)
