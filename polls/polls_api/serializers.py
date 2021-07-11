@@ -1,16 +1,5 @@
-from abc import ABC
-
 from rest_framework import serializers
-from django.contrib.auth.models import User
 from .models import Poll, Question, Answer, Choice, Participant
-
-
-# class PollSerializer(serializers.Serializer):
-#     poll_id = serializers.IntegerField()
-#     title = serializers.CharField(max_length=1024)
-#     start_date = serializers.DateTimeField()
-#     expiration_date = serializers.DateTimeField()
-#     description = serializers.CharField(max_length=4096, allow_blank=True)
 
 
 class ChoiceSerializer(serializers.ModelSerializer):
@@ -23,28 +12,6 @@ class QuestionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
         fields = '__all__'
-
-
-class QuestionWithTextInputType(serializers.ModelSerializer):
-    class Meta:
-        model = Question
-        fields = '__all__'
-
-
-class QuestionWithSingleChoiceType(serializers.ModelSerializer):
-    choice = ChoiceSerializer(read_only=True)
-
-    class Meta:
-        model = Question
-        fields = ['id', 'text', 'type']
-
-
-class QuestionWithMultipleChoicesType(serializers.ModelSerializer):
-    choice = ChoiceSerializer(read_only=True, many=True, allow_null=True)
-
-    class Meta:
-        model = Question
-        fields = ['id', 'text', 'type', 'choice']
 
 
 class QuestionDetailSerializer(serializers.ModelSerializer):
@@ -86,12 +53,10 @@ class AnswerSerializer(serializers.ModelSerializer):
         elif question.type == 'SINGLE':
             if len(value) != 1:
                 raise serializers.ValidationError(detail='Select one')
-        if len(value) < 1: # multi-choice variant
+        if len(value) < 1:  # multi-choice variant
             raise serializers.ValidationError(detail='Select at least one')
         for choice in value:
             if choice.question.id != question.id:
-                print(choice.question.id)
-                print(question_id)
                 raise serializers.ValidationError(detail='Choice do not correspond question')
         return value
 

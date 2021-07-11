@@ -21,7 +21,6 @@ class IsAdminOrReadOnly(permissions.BasePermission):
         :param view:
         :return: binary decision
         """
-        print(request.method)
         if request.method in permissions.SAFE_METHODS:
             return True
         return request.user.is_superuser
@@ -40,76 +39,9 @@ class IsAdminOrPostOnly(permissions.BasePermission):
         :param obj:
         :return: binary decision
         """
-        print(request.method)
         if request.method == 'POST':
             return True
         return request.user.is_superuser
-
-
-# User working with polls.
-class PollsView(APIView):
-    permission_classes = [permissions.AllowAny]
-
-    # Show list of polls
-    def get(self, request):
-        now = datetime.datetime.now()
-        if not request.user.is_superuser:
-            polls = Poll.objects.filter(start_date__lte=now, expiration_date__gt=now)
-        else:
-            polls = Poll.objects.all()
-        if polls.count() < 1:
-            return Response("It's empty", status=status.HTTP_204_NO_CONTENT)
-        serializer = serializers.PollSerializer(polls, many=True)
-        print("____GET_______GET_____")
-        return Response(serializer.data)
-
-    # # Add poll, permission: su only
-    # def post(self, request):
-    #     if not request.user.is_superuser:
-    #         return Response(status=status.HTTP_403_FORBIDDEN)
-    #     # json example: {"poll":{"title":"who are you?", "expiration_date":"2021-07-08T00:00:00Z"}}
-    #     print("___POST_____POST__")
-    #     poll_request = request.data.get('poll')
-    #     # create a poll from above data
-    #     serializer = PollSerializer(data=poll_request)
-    #     if serializer.is_valid(raise_exception=True):
-    #         poll_saved = serializer.save()
-    #     return Response({"success": "Poll '{}' created".format(poll_saved.title)})
-    #
-    # # Delete all polls, permission: su only
-    # def delete(self, request):
-    #     if not request.user.is_superuser:
-    #         return Response(status=status.HTTP_403_FORBIDDEN)
-    #     print("___DELETE_____DELETE__")
-    #     Poll.objects.all().delete()
-    #     return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-class QuestionsView(APIView):
-    permission_classes = [permissions.AllowAny]
-
-    def get(self, request, poll_id_requested):
-        # find poll by id
-        poll_q = Poll.objects.filter(id=poll_id_requested)  # poll QuerySet
-        if not poll_q:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-        else:
-            poll = poll_q.first()  # assumes poll id is unique
-        # check if expired
-        now = datetime.datetime.now(tz=None).replace(tzinfo=get_default_timezone())
-        if not request.user.is_superuser and poll.expiration_date < now:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-        # get all questions in poll
-        questions = Question.objects.filter(poll=poll_id_requested)
-        # serialize
-
-        questions_serializer = serializers.QuestionWithMultipleChoicesType(questions, many=True)
-        # send all questions
-        return Response(questions_serializer.data, status=status.HTTP_200_OK)
-
-
-class ChoicesView(APIView):
-    permission_classes = [permissions.AllowAny]
 
 
 class PollViewSet(viewsets.ModelViewSet):
@@ -241,26 +173,10 @@ class AnswerViewSet(viewsets.ModelViewSet):
         return queryset
 
 
-class ParticipantViewSet(generics.RetrieveUpdateAPIView):
-    """
-
-    """
-    queryset = Participant.objects.all()
-    serializer_class = serializers.ParticipantSerializer
-    permission_classes = [permissions.AllowAny]
-
-    def get_queryset(self):
-        """
-        Return only answers related to the question
-        :return: queryset of answers on the question
-        """
-        queryset = Participant.objects.filter(user_id=self.kwargs['user_id'])
-        return queryset
-
-
 class UserListView(APIView):
     """
-
+    get:
+    Returns all participants in all polls
     """
 
     def get(self, request):
@@ -275,17 +191,12 @@ class UserListView(APIView):
 
 class UserView(APIView):
     """
+    get:
+    Returns all answers of the participant
 
+    patch:
+    Change user data
     """
-
-    # def get(self, request, user_id):
-    #     """
-    #     Return only answers related to the question
-    #     :return: queryset of answers on the question
-    #     """
-    #     queryset = Answer.objects.filter(user_id=user_id)
-    #     serializer = serializers.AnswerSerializer(queryset, many=True)
-    #     return Response(serializer.data)
 
     def get(self, request, user_id):
         """
@@ -311,37 +222,3 @@ class UserView(APIView):
             serializer.save()
             return Response(data=serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    # Show list of answers, permission: admin only
-    # def get(self, request):
-    #     now = datetime.datetime.now()
-    #     if not request.user.is_superuser:
-    #         polls = Poll.objects.filter(start_date__lte=now, expiration_date__gt=now)
-    #     else:
-    #         polls = Poll.objects.all()
-    #     if polls.count() < 1:
-    #         return Response("It's empty", status=status.HTTP_204_NO_CONTENT)
-    #     serializer = serializers.PollSerializer(polls, many=True)
-    #     print("____GET_______GET_____")
-    #     return Response(serializer.data)
-
-    # # Publish answer, permission: everyone
-    # def post(self, request):
-    #     if not request.user.is_superuser:
-    #         return Response(status=status.HTTP_403_FORBIDDEN)
-    #     # json example: {"poll":{"title":"who are you?", "expiration_date":"2021-07-08T00:00:00Z"}}
-    #     print("___POST_____POST__")
-    #     poll_request = request.data.get('poll')
-    #     # create a poll from above data
-    #     serializer = PollSerializer(data=poll_request)
-    #     if serializer.is_valid(raise_exception=True):
-    #         poll_saved = serializer.save()
-    #     return Response({"success": "Poll '{}' created".format(poll_saved.title)})
-    #
-    # # Delete all polls, permission: su only
-    # def delete(self, request):
-    #     if not request.user.is_superuser:
-    #         return Response(status=status.HTTP_403_FORBIDDEN)
-    #     print("___DELETE_____DELETE__")
-    #     Poll.objects.all().delete()
-    #     return Response(status=status.HTTP_204_NO_CONTENT)

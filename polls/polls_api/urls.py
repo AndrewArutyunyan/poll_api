@@ -17,16 +17,9 @@ app_name = "polls"
 
 urlpatterns = [
     path('api/', include(router.urls)),
-    # re_path(r'api/poll/(?P<poll_id>[0-9]+)/question/(?P<question_id>[0-9]+)/answer', views.AnswerView.as_view()),
     re_path(r'api/user/(?P<user_id>[0-9]+)', views.UserView.as_view()),
     re_path(r'api/user', views.UserListView.as_view()),
 
     path('schema/', schema_view),
     path('docs/', include_docs_urls(title='Polls API'))
 ]
-
-# urlpatterns = [
-#     path('polls/', PollsView.as_view()),
-#     re_path(r'^polls/poll_(?P<poll_id_requested>[0-9]+)/$', QuestionsView.as_view()),
-#     re_path(r'^polls/poll_(?P<poll_id_requested>[0-9]+)/(?P<question_id_requested>[0-9]+)/$', ChoicesView.as_view()),
-# ]
